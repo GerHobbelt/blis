@@ -55,7 +55,11 @@
 #define BLIS_CONFIG_ZEN3
 
 #define BLIS_ENABLE_SMALL_MATRIX
-#define BLIS_ENABLE_SMALL_MATRIX_TRSM
+// Disabling BLIS_ENABLE_SMALL_MATRIX_TRSM macro for trsm small , to avoid
+// generating “inf” and “NaN” values for extremely small input test data 
+// Ex: FLOAT_MIN  1.40129846e-45 and DOUBLE_MIN  4.9406564584124654e-324
+// on single thread environment.
+//#define BLIS_ENABLE_SMALL_MATRIX_TRSM
 
 
 // This will select the threshold below which small matrix code will be called.

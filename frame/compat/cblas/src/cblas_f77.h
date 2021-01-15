@@ -14,10 +14,10 @@
 #ifndef CBLAS_F77_H
 #define CBLAS_F77_H
 
-#ifdef _WIN32
-/*
- * Level 1 BLAS
- */
+#if (defined(_WIN32) || defined(_WIN64))
+ /*
+  * Level 1 BLAS
+  */
 #define F77_xerbla     xerbla
 #define F77_srotg      srotg
 #define F77_srotmg     srotmg
