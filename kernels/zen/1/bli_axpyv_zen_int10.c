@@ -456,7 +456,10 @@ void bli_daxpyv_zen_int10
 
         for ( ; i < n; i += 1 )
         {
-            *y0 += (*alpha) * (*x0);
+            if(isinf(*y0) && isinf(*x0))
+                *y0 = *x0;
+            else
+                *y0 += (*alpha) * (*x0);
 
             y0 += 1;
             x0 += 1;
