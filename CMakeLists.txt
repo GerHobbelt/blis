@@ -1,4 +1,4 @@
-##Copyright (C) 2020, Advanced Micro Devices, Inc. All rights reserved.## 
+##Copyright (C) 2020, Advanced Micro Devices, Inc. All rights reserved.##
 
 cmake_minimum_required(VERSION 3.0.0)
 
@@ -9,13 +9,28 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 
-set(AOCL_BLIS_FAMILY "zen2" CACHE STRING "AOCL BLIS family name")
-message(AOCL_BLIS_FAMILY=${AOCL_BLIS_FAMILY})
+SET(AOCL_BLIS_FAMILY "zen" CACHE STRING "AOCL BLIS family name")
 set(TARGET_ARCH ${AOCL_BLIS_FAMILY})
 set(AOCL_BLIS_ZEN TRUE)
+set (PYTHON_EXE "python")
+
 if ("${AOCL_BLIS_FAMILY}" STREQUAL "")
   message(FATAL_ERROR "Machine configuration missing! Select one of zen, zen2, zen3 or amd64")
-elseif(${AOCL_BLIS_FAMILY} STREQUAL "zen")
+endif ()
+
+if (${AOCL_BLIS_FAMILY} STREQUAL "auto")
+  set(AUTO_CONFIG_PY "${CMAKE_SOURCE_DIR}/build/auto_config.py")
+  # Run python script to find the architecture family name
+  execute_process(
+        COMMAND ${PYTHON_EXE} ${AUTO_CONFIG_PY}
+        RESULT_VARIABLE CMD_RESULT
+        OUTPUT_VARIABLE CMD_OUTPUT
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+  message( STATUS "Auto configuring the family :" ${CMD_OUTPUT})
+  set(AOCL_BLIS_FAMILY ${CMD_OUTPUT})
+endif ()
+
+if(${AOCL_BLIS_FAMILY} STREQUAL "zen")
   add_definitions(-DBLIS_FAMILY_ZEN)
   add_definitions(-DBLIS_CONFIG_ZEN)
   add_definitions(-DBLIS_KERNELS_ZEN)
@@ -49,6 +64,9 @@ else ()
   message(FATAL_ERROR "Wrong machine configuration. Select one of zen, zen2, zen3 or amd64")
 endif ()
 
+set(TARGET_ARCH ${AOCL_BLIS_FAMILY})
+message("AOCL_BLIS_FAMILY selected:${AOCL_BLIS_FAMILY}")
+
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(ENABLE_VERBOSE "Enable VERBOSE mode for build" OFF)
 option(ENABLE_MULTITHREADING "Enable Multi threading" OFF)
@@ -70,16 +88,22 @@ option(BLIS_ENABLE_ILP64 "ENABLE BLIS ILP64" OFF)
 option(ENABLE_INT_TYPE_SIZE "Integer size type" OFF)
 option(ENABLE_BLASTEST "Enable the blastest" OFF)
 option(ENABLE_TESTCPP_TESTING "Enabling testcpp" OFF)
-option(ENABLE_UPPERCASE_API "Enabling testcpp" OFF)
+option (ENABLE_NO_UNDERSCORE_API "export APIs without underscore" OFF)
+option (ENABLE_UPPERCASE "export APIs with uppercase" OFF)
 option(ENABLE_TRSM_PREINVERSION "Enabling testcpp" OFF)
-if (ENABLE_UPPERCASE_API)
-    add_definitions(-DBLIS_ENABLE_UPPERCASE_API)
-endif ()
+
+if(ENABLE_NO_UNDERSCORE_API)
+    add_definitions(-DBLIS_ENABLE_NO_UNDERSCORE_API)
+endif()
+
+if(ENABLE_UPPERCASE)
+     add_definitions(-DBLIS_ENABLE_UPPERCASE)
+endif()
 
 if (BUILD_SHARED_LIBS)
     set(BLIS_ENABLE_SHARED TRUE)
     if(ENABLE_BLASTEST)
-    	add_definitions(-DSUPPORT_BLASTEST_FOR_SHARED)
+        add_definitions(-DAOCL_SUPPORT_BLASTEST_FOR_SHARED)
     endif()
 endif ()
 
@@ -243,7 +267,7 @@ message(BLIS_ENABLE_SHARED : ${BLIS_ENABLE_SHARED})
 
 
 SET(ENABLE_SIMD_FLAGS "AVX2" CACHE STRING "Set compiler SIMD flags")
-SET_PROPERTY(CACHE ENABLE_SIMD_FLAGS PROPERTY STRINGS none SSE2 AVX AVX2) 
+SET_PROPERTY(CACHE ENABLE_SIMD_FLAGS PROPERTY STRINGS none SSE2 AVX AVX2)
 
 if(${ENABLE_SIMD_FLAGS} MATCHES "AVX2")
   add_definitions(/arch:AVX2)
@@ -260,7 +284,7 @@ set(INTR_GENERAL_LINK_FLAGS "${INTR_GENERAL_LINK_FLAGS} /RELEGE")
 
 add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
 
-    add_definitions(-DBLIS_OS_WINDOWS)
+#add_definitions(-DBLIS_OS_WINDOWS)
 add_definitions(-D_MSC_VER)
 add_definitions(-DBLIS_CNAME=${TARGET_ARCH})
 
@@ -366,77 +390,77 @@ elseif (${AOCL_BLIS_FAMILY} STREQUAL "zen2")
     " ${CMAKE_CURRENT_SOURCE_DIR}/kernels/zen/" 
     " ${CMAKE_CURRENT_SOURCE_DIR}/kernels/haswell/" 
 elseif (${AOCL_BLIS_FAMILY} STREQUAL "amd64")
-    " ${CMAKE_CURRENT_SOURCE_DIR}/config/amd64/" 
-    " ${CMAKE_CURRENT_SOURCE_DIR}/config/bulldozer/" 
-    " ${CMAKE_CURRENT_SOURCE_DIR}/config/excavator/" 
-    " ${CMAKE_CURRENT_SOURCE_DIR}/config/generic/"   
-    " ${CMAKE_CURRENT_SOURCE_DIR}/config/piledriver/"   
-    " ${CMAKE_CURRENT_SOURCE_DIR}/config/steamroller/"   
-    " ${CMAKE_CURRENT_SOURCE_DIR}/kernels/piledriver/"   
-    " ${CMAKE_CURRENT_SOURCE_DIR}/kernels/bulldozer/"   
+    " ${CMAKE_CURRENT_SOURCE_DIR}/config/amd64/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/config/bulldozer/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/config/excavator/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/config/generic/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/config/piledriver/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/config/steamroller/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/kernels/piledriver/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/kernels/bulldozer/"
 endif ()
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/0/"   
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/0/copysc/"   
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1/"    
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1d/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1f/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1m/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1m/packm/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1m/unpackm/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/gemv/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/ger/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/hemv/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/her/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/her2/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/symv/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/syr/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/syr2/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/trmv/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/trsv/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/gemm/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/gemm/ind/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/gemmt/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/hemm/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/her2k/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/herk/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/symm/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/syr2k/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/syrk/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/trmm/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/trmm3/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/trsm/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/base/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/base/cast/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/base/check/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/base/noopt/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/base/proj/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/cblas/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/cblas/f77_sub/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/cblas/src/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/check/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/f2c/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/f2c/util/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/1e/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/1m/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/1r/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/bb/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/io/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/ri/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/ri3/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/rih/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/ro/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/rpi/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/ind/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/ind/cntx/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/ind/oapi/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/ind/tapi/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/ind/ukernels/"  
-    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/thread/"  
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/0/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/0/copysc/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1d/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1f/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1m/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1m/packm/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/1m/unpackm/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/gemv/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/ger/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/hemv/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/her/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/her2/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/symv/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/syr/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/syr2/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/trmv/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/2/trsv/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/gemm/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/gemm/ind/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/gemmt/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/hemm/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/her2k/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/herk/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/symm/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/syr2k/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/syrk/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/trmm/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/trmm3/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/3/trsm/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/base/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/base/cast/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/base/check/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/base/noopt/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/base/proj/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/cblas/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/cblas/f77_sub/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/cblas/src/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/check/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/f2c/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/compat/f2c/util/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/1e/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/1m/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/1r/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/bb/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/io/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/ri/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/ri3/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/rih/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/ro/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/include/level0/rpi/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/ind/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/ind/cntx/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/ind/oapi/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/ind/tapi/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/ind/ukernels/"
+    " ${CMAKE_CURRENT_SOURCE_DIR}/frame/thread/"
     " ${CMAKE_CURRENT_SOURCE_DIR}/frame/util/"
     " ${CMAKE_CURRENT_SOURCE_DIR}/aocl_dtl/"
 )
@@ -445,7 +469,7 @@ file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/include/${TARGET_ARCH})
 
 # Flatten header python script file which expand header contents in blis.h
 set(FLATTEN_PY "${CMAKE_SOURCE_DIR}/build/flatten-headers.py")
-set(BLIS_H "blis.h") 
+set(BLIS_H "blis.h")
 
 # Arguements for python script
 set(C_COMMENT "-c")
@@ -454,7 +478,6 @@ set(INPUT "${CMAKE_SOURCE_DIR}/frame/include/${BLIS_H}")
 set(OUTPUT "${CMAKE_SOURCE_DIR}/include/${TARGET_ARCH}/${BLIS_H}")
 set(TEMP_DIR "${INCLUDE}")
 set(DIR_H_PATH "${HEADER_PATH}")
-set (PYTHON_EXE "python")
 
 # Run python script to generate monolithic header at configuration time
 execute_process(
@@ -469,14 +492,14 @@ set(BLIS_VERSION_STRING ${BLIS_VERSION})
 add_definitions(-DBLIS_VERSION_STRING="${BLIS_VERSION_STRING}")
 
 if(BUILD_SHARED_LIBS)
-    add_library("${PROJECT_NAME}" SHARED ${CMAKE_SOURCE_DIR}/include/${TARGET_ARCH}/bli_config.h 
+    add_library("${PROJECT_NAME}" SHARED ${CMAKE_SOURCE_DIR}/include/${TARGET_ARCH}/bli_config.h
                          ${CMAKE_SOURCE_DIR}/include/${TARGET_ARCH}/blis.h
                          ${headers})
     target_compile_definitions("${PROJECT_NAME}" PUBLIC -DBLIS_IS_BUILDING_LIBRARY)
     set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE C OUTPUT_NAME "${LIB_NAME}")
 endif()
 if(NOT BUILD_SHARED_LIBS)
-    add_library("${PROJECT_NAME}" STATIC ${CMAKE_SOURCE_DIR}/include/${TARGET_ARCH}/bli_config.h 
+    add_library("${PROJECT_NAME}" STATIC ${CMAKE_SOURCE_DIR}/include/${TARGET_ARCH}/bli_config.h
                          ${CMAKE_SOURCE_DIR}/include/${TARGET_ARCH}/blis.h
                          ${headers})
     set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE C OUTPUT_NAME "${LIB_NAME}")

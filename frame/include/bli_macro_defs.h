@@ -157,11 +157,11 @@
 
 #define PASTEMACT(ch1, ch2, ch3, ch4)   bli_ ## ch1 ## ch2 ## _ ## ch3 ## _ ## ch4
 // Fortran-77 name-mangling macros.
-#if (defined(_WIN32) || defined(_WIN64))
-#define PASTEF770(name)                                      name 
-#define PASTEF77(ch1,name)                     ch1        ## name 
-#define PASTEF772(ch1,ch2,name)                ch1 ## ch2 ## name 
-#define PASTEF773(ch1,ch2,ch3,name)     ch1 ## ch2 ## ch3 ## name 
+#ifdef BLIS_ENABLE_NO_UNDERSCORE_API
+#define PASTEF770(name)                                      name
+#define PASTEF77(ch1,name)                     ch1        ## name
+#define PASTEF772(ch1,ch2,name)                ch1 ## ch2 ## name
+#define PASTEF773(ch1,ch2,ch3,name)     ch1 ## ch2 ## ch3 ## name
 #else
 #define PASTEF770(name)                                      name ## _
 #define PASTEF77(ch1,name)                     ch1        ## name ## _
@@ -188,7 +188,7 @@
 #include "bli_oapi_macro_defs.h"
 #include "bli_tapi_macro_defs.h"
 
-#if (defined(_WIN32) || defined(_WIN64))
+#ifdef BLIS_ENABLE_NO_UNDERSCORE_API
 #define isamax_ isamax
 #define idamax_ idamax
 #define icamax_ icamax
@@ -283,8 +283,9 @@
 #define ctrsm_  ctrsm
 #define ztrsm_  ztrsm
 #define lsame_  lsame
+#endif
 
-#ifdef BLIS_ENABLE_UPPERCASE_API
+#ifdef BLIS_ENABLE_UPPERCASE
 #define caxpby                    CAXPBY
 #define caxpy                     CAXPY 
 #define ccopy                     CCOPY
@@ -493,8 +494,6 @@
 #define ztrmv                     ZTRMV
 #define ztrsm                     ZTRSM
 #define ztrsv                     ZTRSV
-#endif
-
 #endif
 
 #endif

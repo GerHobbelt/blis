@@ -13,8 +13,7 @@
 
 #ifndef CBLAS_F77_H
 #define CBLAS_F77_H
-
-#if (defined(_WIN32) || defined(_WIN64))
+#if defined(BLIS_ENABLE_NO_UNDERSCORE_API)
  /*
   * Level 1 BLAS
   */
