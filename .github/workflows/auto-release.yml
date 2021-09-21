@@ -1,0 +1,65 @@
+name: Automatic release
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  test:
+    name: BLIS ${{ matrix.target.config }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - {
+              config: 'x86_64',
+              cc: 'gcc',
+              cflags: '',
+              packages: 'gcc binutils'
+            }
+          - {
+              config: 'cortexa57',
+              cc: 'aarch64-linux-gnu-gcc',
+              cflags: '-mno-outline-atomics',
+              packages: 'gcc-aarch64-linux-gnu libc6-dev-arm64-cross'
+            }
+        os:
+          - ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y ${{ matrix.target.packages }}
+          ${{ matrix.target.cc }} --version
+
+      - name: Configure project
+        run: |
+          mkdir dest
+          ./configure -t none -p ./dest \
+            CC=${{ matrix.target.cc }} \
+            CFLAGS=${{ matrix.target.cflags }} \
+            ${{ matrix.target.config }}
+
+      - name: Build
+        run: |
+          make -j
+
+      - name: Quick check
+        if: startsWith(matrix.target.config, 'x86')
+        run: |
+          make -j checkblis-fast
+
+      - name: Install
+        run: |
+          make install
+
+      - name: Packup
+        run: |
+          cd dest
+          tar -zcvf libblis_${{ matrix.target.config }}_${{ matrix.target.cc }}.tar.gz \
+            include lib
+          cd ..
