@@ -49,9 +49,11 @@ void bli_cntx_init_a64fx( cntx_t* cntx )
 	// their storage preferences.
 	bli_cntx_set_l3_nat_ukrs
 	(
-	  2,
-	  BLIS_GEMM_UKR, BLIS_FLOAT,  bli_sgemm_armsve_asm_2vx10_unindexed, FALSE,
-	  BLIS_GEMM_UKR, BLIS_DOUBLE, bli_dgemm_armsve_asm_2vx10_unindexed, FALSE,
+	  4,
+	  BLIS_GEMM_UKR, BLIS_FLOAT,    bli_sgemm_armsve_asm_2vx10_unindexed, FALSE,
+	  BLIS_GEMM_UKR, BLIS_DOUBLE,   bli_dgemm_armsve_asm_2vx10_unindexed, FALSE,
+	  BLIS_GEMM_UKR, BLIS_SCOMPLEX, bli_cgemm_armsve_asm_2vx10_unindexed, FALSE,
+	  BLIS_GEMM_UKR, BLIS_DCOMPLEX, bli_zgemm_armsve_asm_2vx10_unindexed, FALSE,
 	  cntx
 	);
 
@@ -67,11 +69,11 @@ void bli_cntx_init_a64fx( cntx_t* cntx )
 
 	// Initialize level-3 blocksize objects with architecture-specific values.
 	//                                           s      d      c      z
-	bli_blksz_init_easy( &blkszs[ BLIS_MR ],    32,    16,    -1,    -1 );
-	bli_blksz_init_easy( &blkszs[ BLIS_NR ],    10,    10,    -1,    -1 );
-	bli_blksz_init_easy( &blkszs[ BLIS_MC ],   256,   128,    -1,    -1 );
-	bli_blksz_init_easy( &blkszs[ BLIS_KC ],  2048,  2048,    -1,    -1 );
-	bli_blksz_init_easy( &blkszs[ BLIS_NC ], 23040, 26880,    -1,    -1 );
+	bli_blksz_init_easy( &blkszs[ BLIS_MR ],    32,    16,    16,     8 );
+	bli_blksz_init_easy( &blkszs[ BLIS_NR ],    10,    10,    10,    10 );
+	bli_blksz_init_easy( &blkszs[ BLIS_MC ],   256,   128,   192,    96 );
+	bli_blksz_init_easy( &blkszs[ BLIS_KC ],  2048,  2048,  1536,  1536 );
+	bli_blksz_init_easy( &blkszs[ BLIS_NC ], 23040, 26880, 11520, 11760 );
 
 	// Update the context with the current architecture's register and cache
 	// blocksizes (and multiples) for native execution.
@@ -85,57 +87,6 @@ void bli_cntx_init_a64fx( cntx_t* cntx )
 	  BLIS_MR, &blkszs[ BLIS_MR ], BLIS_MR,
 	  cntx
 	);
-
-#if 0
-	// Initialize sup thresholds with architecture-appropriate values.
-	//                                          s     d     c     z
-	bli_blksz_init_easy( &thresh[ BLIS_MT ],   -1,   65,   -1,   -1 );
-	bli_blksz_init_easy( &thresh[ BLIS_NT ],   -1,   65,   -1,   -1 );
-	bli_blksz_init_easy( &thresh[ BLIS_KT ],   -1,   65,   -1,   -1 );
-
-	// Initialize the context with the sup thresholds.
-	bli_cntx_set_l3_sup_thresh
-	(
-	  3,
-	  BLIS_MT, &thresh[ BLIS_MT ],
-	  BLIS_NT, &thresh[ BLIS_NT ],
-	  BLIS_KT, &thresh[ BLIS_KT ],
-	  cntx
-	);
-
-	// Update the context with optimized small/unpacked gemm kernels.
-	bli_cntx_set_l3_sup_kers
-	(
-	  4,
-	  BLIS_RRR, BLIS_DOUBLE, bli_dgemmsup_rv_armsve_10x2v_unindexed, TRUE,
-	  BLIS_RCR, BLIS_DOUBLE, bli_dgemmsup_rv_armsve_10x2v_unindexed, TRUE,
-	  BLIS_CCR, BLIS_DOUBLE, bli_dgemmsup_rv_armsve_10x2v_unindexed, TRUE,
-	  BLIS_CCC, BLIS_DOUBLE, bli_dgemmsup_rv_armsve_10x2v_unindexed, TRUE,
-	  cntx
-	);
-
-	// Initialize level-3 sup blocksize objects with architecture-specific
-	// values.
-	//                                           s      d      c      z
-	bli_blksz_init_easy( &blkszs[ BLIS_MR ],    -1,    10,    -1,    -1 );
-	bli_blksz_init_easy( &blkszs[ BLIS_NR ],    -1,    16,    -1,    -1 );
-	bli_blksz_init_easy( &blkszs[ BLIS_MC ],    -1,   120,    -1,    -1 );
-	bli_blksz_init_easy( &blkszs[ BLIS_KC ],    -1,   256,    -1,    -1 );
-	bli_blksz_init_easy( &blkszs[ BLIS_NC ],    -1,  4080,    -1,    -1 );
-
-	// Update the context with the current architecture's register and cache
-	// blocksizes for small/unpacked level-3 problems.
-	bli_cntx_set_l3_sup_blkszs
-	(
-	  5,
-	  BLIS_NC, &blkszs[ BLIS_NC ],
-	  BLIS_KC, &blkszs[ BLIS_KC ],
-	  BLIS_MC, &blkszs[ BLIS_MC ],
-	  BLIS_NR, &blkszs[ BLIS_NR ],
-	  BLIS_MR, &blkszs[ BLIS_MR ],
-	  cntx
-	);
-#endif
 
 	// Set A64FX cache sector sizes for each PE/CMG
 	// SC Fugaku might disable users' setting cache sizes.
