@@ -78,7 +78,7 @@ jobs:
       - name: Configure project
         run: |
           mkdir dest
-          ./configure -t none -p ./dest \
+          ./configure -t none -p ./dest --disable-blas \
             CC=${{ matrix.target.cc }} \
             CFLAGS=${{ matrix.target.cflags }} \
             ${{ matrix.target.config }}
