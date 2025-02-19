@@ -75,5 +75,6 @@ void bli_dgemm_rviv_4vx4
 	bli_dgemm_rviv_asm_4vx4( k, alpha, a, b, beta, c,
 	                         get_vlenb(), cs_c * sizeof(double) );
 
+
 	GEMM_UKR_FLUSH_CT( d );
 }
