@@ -40,6 +40,6 @@
 #define FZERO(fr) fcvt.d.w fr, x0
 #define FEQ feq.d
 #define VLE th.vle.v
-#define VSE th.vse.v
+#define VSE th.vse.v 
 
 #include "bli_sdgemm_rviv_asm_4vx4.h"
