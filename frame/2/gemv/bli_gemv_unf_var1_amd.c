@@ -807,7 +807,7 @@ void bli_sgemv_unf_var1
           bli_sgemv_var1_smart_threading(n_elem, n_iter, b_fuse, &nt, nt_max);
         #endif
 
-        // Pass the input paramaters along with the number of threads to be used
+        // Pass the input parameters along with the number of threads to be used
         bli_multi_sgemv_4x2
         (
           conja,

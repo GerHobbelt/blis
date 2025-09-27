@@ -1549,7 +1549,7 @@ void bli_lpgemm_jit::generate_kernel( lpgemm_jit_inputs_t* params )
     preamble();
     // add some spack in stack to store params
     sub( rsp, 512 );
-    // Initialize all the paramters required for execution of kernel.
+    // Initialize all the parameters required for execution of kernel.
     // load some values to registers and push the rest of them to stack.
     initialize_params( params );
 
